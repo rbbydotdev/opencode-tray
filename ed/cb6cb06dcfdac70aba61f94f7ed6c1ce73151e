@@ -1,0 +1,28 @@
+Sources/OpenCodeTray/ExecutableLocator.swift
+  s_50eef8ed16fb77::t_3f63a46c685fae 1-41
+Sources/OpenCodeTray/SettingsWindowController.swift
+  s_50eef8ed16fb77::t_3f63a46c685fae 7-8,68,98-101,141-151,284-310
+Sources/OpenCodeTray/ServerSettings.swift
+  s_50eef8ed16fb77::t_3f63a46c685fae 182
+Sources/OpenCodeTray/OpenCodeServer.swift
+  s_50eef8ed16fb77::t_3f63a46c685fae 77
+  s_50eef8ed16fb77::t_621cdfa07d66e5 75,78-81,84-87,89,160,174-179
+README.md
+  s_50eef8ed16fb77::t_3f63a46c685fae 51-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "edcb6cb06dcfdac70aba61f94f7ed6c1ce73151e",
+  "prompts": {},
+  "sessions": {
+    "s_50eef8ed16fb77": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1f268d2a3ffeVI365kAByeqq2t",
+        "model": "gpt-5.5-fast"
+      },
+      "human_author": "robby <robby.polana+github@gmail.com>"
+    }
+  }
+}
