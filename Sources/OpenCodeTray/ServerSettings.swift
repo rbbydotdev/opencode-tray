@@ -179,9 +179,7 @@ struct ServerSettings: Equatable {
     }
 
     private func mergedPath(existing: String?) -> String {
-        let commonPath = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-        guard let existing, !existing.isEmpty else { return commonPath }
-        return "\(commonPath):\(existing)"
+        ExecutableLocator.searchPath(merging: existing)
     }
 
     private func shellQuoted(_ value: String) -> String {

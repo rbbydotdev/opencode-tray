@@ -48,6 +48,8 @@ Defaults:
 
 QR and copied server URLs prefer Tailscale, then WireGuard/VPN-style `utun` private IPs, then LAN private IPs. Passwords are stored in Keychain and are only read after password auth is configured.
 
+The executable resolver checks common GUI-app paths including `~/.opencode/bin`, `~/.bun/bin`, `/opt/homebrew/bin`, and `/usr/local/bin`. Settings also has `Detect` and `Browse...` controls for selecting a specific binary.
+
 ## Explanation
 
 The app runs `opencode serve` as a child process and restarts it when server settings change. Login startup is managed with `~/Library/LaunchAgents/ai.opencode.tray.plist`. The app bundle icon comes from the OpenCode desktop icon, and the tray icon is drawn from the compact OpenCode mark.

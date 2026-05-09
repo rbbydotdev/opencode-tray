@@ -4,6 +4,8 @@ final class SettingsWindowController: NSWindowController {
     private let onSave: (ServerSettings) -> Bool
 
     private let executableField = NSTextField()
+    private let detectExecutableButton = NSButton(title: "Detect", target: nil, action: nil)
+    private let browseExecutableButton = NSButton(title: "Browse...", target: nil, action: nil)
     private let workingDirectoryField = NSTextField()
     private let hostnameField = NSTextField()
     private let portField = NSTextField()
@@ -63,7 +65,7 @@ final class SettingsWindowController: NSWindowController {
         ])
 
         addSection("opencode")
-        addRow("Executable", executableField, to: stack)
+        addRow("Executable", makeExecutableControl(), to: stack)
         addRow("Working Directory", workingDirectoryField, to: stack)
 
         addSection("Server")
@@ -93,6 +95,10 @@ final class SettingsWindowController: NSWindowController {
 
         mdnsCheckbox.target = self
         mdnsCheckbox.action = #selector(toggleMDNS(_:))
+        detectExecutableButton.target = self
+        detectExecutableButton.action = #selector(detectExecutable(_:))
+        browseExecutableButton.target = self
+        browseExecutableButton.action = #selector(browseExecutable(_:))
     }
 
     private func addSection(_ title: String) {
@@ -130,6 +136,17 @@ final class SettingsWindowController: NSWindowController {
         row.spacing = 0
         row.alignment = .centerY
         stack.addArrangedSubview(row)
+    }
+
+    private func makeExecutableControl() -> NSStackView {
+        executableField.placeholderString = "opencode or /path/to/opencode"
+        executableField.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        let row = NSStackView(views: [executableField, detectExecutableButton, browseExecutableButton])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 6
+        return row
     }
 
     private func makeCORSEditor() -> NSScrollView {
@@ -262,6 +279,35 @@ final class SettingsWindowController: NSWindowController {
 
     @objc private func toggleMDNS(_ sender: Any?) {
         mdnsDomainField.isEnabled = mdnsCheckbox.state == .on
+    }
+
+    @objc private func detectExecutable(_ sender: Any?) {
+        let currentValue = executableField.stringValue.trimmed
+        let requestedExecutable = currentValue.isEmpty ? "opencode" : currentValue
+        let environment = ServerSettings.defaults.environment(merging: ProcessInfo.processInfo.environment)
+
+        if let url = ExecutableLocator.resolve(requestedExecutable, environment: environment) ?? ExecutableLocator.resolve("opencode", environment: environment) {
+            executableField.stringValue = url.path
+        } else {
+            showValidationError("Could not find opencode. Install it first, or use Browse to select the executable manually.")
+        }
+    }
+
+    @objc private func browseExecutable(_ sender: Any?) {
+        guard let window else { return }
+
+        let panel = NSOpenPanel()
+        panel.title = "Select opencode Executable"
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.showsHiddenFiles = true
+        panel.prompt = "Use Executable"
+
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            self?.executableField.stringValue = url.path
+        }
     }
 
     @objc private func resetDefaults(_ sender: Any?) {

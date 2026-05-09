@@ -71,19 +71,22 @@ final class OpenCodeServer {
         appendOutput("$ \(settings.displayCommand)\n")
         state = .starting
 
-        let process = Process()
         let executable = settings.executable.trimmingCharacters(in: .whitespacesAndNewlines)
+        let environment = settings.environment(merging: ProcessInfo.processInfo.environment)
 
-        if executable.contains("/") {
-            process.executableURL = URL(fileURLWithPath: NSString(string: executable).expandingTildeInPath)
-            process.arguments = settings.arguments
-        } else {
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = [executable] + settings.arguments
+        guard let executableURL = ExecutableLocator.resolve(executable, environment: environment) else {
+            let message = "Could not find '\(executable)' in PATH. Set Executable in Settings to an absolute path, or install opencode in ~/.opencode/bin, ~/.bun/bin, /opt/homebrew/bin, or /usr/local/bin."
+            appendOutput("\(message)\n")
+            state = .failed(message)
+            return
         }
 
+        let process = Process()
+        process.executableURL = executableURL
+        process.arguments = settings.arguments
+
         process.currentDirectoryURL = URL(fileURLWithPath: settings.expandedWorkingDirectory, isDirectory: true)
-        process.environment = settings.environment(merging: ProcessInfo.processInfo.environment)
+        process.environment = environment
 
         let pipe = Pipe()
         pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
@@ -154,7 +157,7 @@ final class OpenCodeServer {
         if requestedStop || terminatedProcess.terminationStatus == 0 {
             state = .stopped
         } else {
-            let message = "opencode exited with code \(terminatedProcess.terminationStatus)"
+            let message = terminationMessage(for: terminatedProcess.terminationStatus)
             appendOutput("\(message)\n")
             state = .failed(message)
         }
@@ -167,6 +170,13 @@ final class OpenCodeServer {
         if recentOutput.count > 12_000 {
             recentOutput = String(recentOutput.suffix(12_000))
         }
+    }
+
+    private func terminationMessage(for status: Int32) -> String {
+        if status == 127 {
+            return "opencode exited with code 127 (command not found). Check the Executable setting."
+        }
+        return "opencode exited with code \(status)"
     }
 }
 
