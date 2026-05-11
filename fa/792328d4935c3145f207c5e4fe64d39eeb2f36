@@ -1,0 +1,41 @@
+Sources/OpenCodeTray/ServerURLResolver.swift
+  s_50eef8ed16fb77::t_e71fc0d35bae83 78-98
+  s_50eef8ed16fb77::t_2fd05d8182abf2 114,117-118
+Sources/OpenCodeTray/SettingsWindowController.swift
+  s_50eef8ed16fb77::t_7a3e326512e69c 210,345-351
+  s_50eef8ed16fb77::t_0b9820be5f750a 15,79,98-99,199,205-206,252,255,268,290-293
+  s_50eef8ed16fb77::t_2fd05d8182abf2 87
+  s_50eef8ed16fb77::t_9d54ec48def9f2 271
+Sources/OpenCodeTray/ExecutableLocator.swift
+  s_50eef8ed16fb77::t_7a3e326512e69c 6,10-12,18-19,44-100,102-124
+  s_50eef8ed16fb77::t_dc8d03f0bbab5a 101
+README.md
+  s_50eef8ed16fb77::t_9d54ec48def9f2 55
+  s_50eef8ed16fb77::t_0b9820be5f750a 34-35,48
+  s_50eef8ed16fb77::t_2fd05d8182abf2 36-37,56
+  s_50eef8ed16fb77::t_7a3e326512e69c 54
+scripts/build-app.sh
+  s_50eef8ed16fb77::t_ed0ea16bfdb0a2 18-22
+Sources/OpenCodeTray/ServerSettings.swift
+  s_50eef8ed16fb77::t_9d54ec48def9f2 88-92
+  s_50eef8ed16fb77::t_0b9820be5f750a 11,26,43,93-96,106,145-147,174
+Sources/OpenCodeTray/AppDelegate.swift
+  s_50eef8ed16fb77::t_7a3e326512e69c 32,62-83
+  s_50eef8ed16fb77::t_e71fc0d35bae83 199
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "fa792328d4935c3145f207c5e4fe64d39eeb2f36",
+  "prompts": {},
+  "sessions": {
+    "s_50eef8ed16fb77": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1f268d2a3ffeVI365kAByeqq2t",
+        "model": "gpt-5.5-fast"
+      },
+      "human_author": "robby <robby.polana+github@gmail.com>"
+    }
+  }
+}
