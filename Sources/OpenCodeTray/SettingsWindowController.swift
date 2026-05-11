@@ -12,9 +12,9 @@ final class SettingsWindowController: NSWindowController {
     private let mdnsCheckbox = NSButton(checkboxWithTitle: "Enable mDNS discovery", target: nil, action: nil)
     private let mdnsDomainField = NSTextField()
     private let corsTextView = NSTextView()
+    private let enableBasicAuthCheckbox = NSButton(checkboxWithTitle: "Enable OpenCode Basic Auth", target: nil, action: nil)
     private let authUsernameField = NSTextField()
     private let authPasswordField = NSSecureTextField()
-    private let includeAuthInSharedURLsCheckbox = NSButton(checkboxWithTitle: "Include auth in QR and copied URLs", target: nil, action: nil)
     private let launchAtLoginCheckbox = NSButton(checkboxWithTitle: "Start at Login", target: nil, action: nil)
     private let startOnLaunchCheckbox = NSButton(checkboxWithTitle: "Run server when OpenCode Tray opens", target: nil, action: nil)
 
@@ -76,15 +76,15 @@ final class SettingsWindowController: NSWindowController {
         addRow("CORS Origins", makeCORSEditor(), to: stack, alignTop: true)
 
         addSection("Authentication")
+        addCheckboxRow(enableBasicAuthCheckbox, to: stack)
         addRow("Username", authUsernameField, to: stack)
         addRow("Password", authPasswordField, to: stack)
-        addCheckboxRow(includeAuthInSharedURLsCheckbox, to: stack)
 
         addSection("App")
         addCheckboxRow(launchAtLoginCheckbox, to: stack)
         addCheckboxRow(startOnLaunchCheckbox, to: stack)
 
-        let note = NSTextField(wrappingLabelWithString: "Saving settings restarts the server if it is running; no macOS reboot is needed. Password is optional and stored in Keychain. Auth URLs embed the password, so only enable them for trusted devices/networks.")
+        let note = NSTextField(wrappingLabelWithString: "Saving settings restarts the server if it is running; no macOS reboot is needed. OpenCode Basic Auth is optional; shared URLs stay plain, so enter credentials manually if the browser prompts.")
         note.textColor = .secondaryLabelColor
         note.font = .systemFont(ofSize: 11)
         note.translatesAutoresizingMaskIntoConstraints = false
@@ -95,6 +95,8 @@ final class SettingsWindowController: NSWindowController {
 
         mdnsCheckbox.target = self
         mdnsCheckbox.action = #selector(toggleMDNS(_:))
+        enableBasicAuthCheckbox.target = self
+        enableBasicAuthCheckbox.action = #selector(toggleBasicAuth(_:))
         detectExecutableButton.target = self
         detectExecutableButton.action = #selector(detectExecutable(_:))
         browseExecutableButton.target = self
@@ -194,16 +196,18 @@ final class SettingsWindowController: NSWindowController {
         mdnsCheckbox.state = settings.enableMDNS ? .on : .off
         mdnsDomainField.stringValue = settings.mdnsDomain
         corsTextView.string = settings.corsOrigins.joined(separator: "\n")
+        enableBasicAuthCheckbox.state = settings.enableBasicAuth ? .on : .off
         authUsernameField.stringValue = settings.authUsername
         authPasswordField.stringValue = settings.authPassword
-        includeAuthInSharedURLsCheckbox.state = settings.includeAuthInSharedURLs ? .on : .off
         launchAtLoginCheckbox.state = settings.launchAtLogin ? .on : .off
         startOnLaunchCheckbox.state = settings.startServerOnLaunch ? .on : .off
         mdnsDomainField.isEnabled = mdnsCheckbox.state == .on
+        authUsernameField.isEnabled = enableBasicAuthCheckbox.state == .on
+        authPasswordField.isEnabled = enableBasicAuthCheckbox.state == .on
     }
 
     private func collectSettings() -> ServerSettings? {
-        let executable = executableField.stringValue.trimmed
+        let executable = executableField.stringValue.normalizedExecutableInput
         guard !executable.isEmpty else {
             showValidationError("Set the opencode executable. Use 'opencode' if it is available on PATH, or an absolute path such as /opt/homebrew/bin/opencode.")
             return nil
@@ -245,9 +249,10 @@ final class SettingsWindowController: NSWindowController {
             .map { $0.trimmed }
             .filter { !$0.isEmpty }
 
+        let enableBasicAuth = enableBasicAuthCheckbox.state == .on
         let authUsername = authUsernameField.stringValue.trimmed
         let authPassword = authPasswordField.stringValue
-        if !authPassword.isEmpty && authUsername.isEmpty {
+        if enableBasicAuth && !authPassword.isEmpty && authUsername.isEmpty {
             showValidationError("Username cannot be empty when password authentication is enabled.")
             return nil
         }
@@ -260,9 +265,10 @@ final class SettingsWindowController: NSWindowController {
             enableMDNS: enableMDNS,
             mdnsDomain: mdnsDomain,
             corsOrigins: corsOrigins,
+            enableBasicAuth: enableBasicAuth,
             authUsername: authUsername,
             authPassword: authPassword,
-            includeAuthInSharedURLs: includeAuthInSharedURLsCheckbox.state == .on,
+            includeAuthInSharedURLs: false,
             launchAtLogin: launchAtLoginCheckbox.state == .on,
             startServerOnLaunch: startOnLaunchCheckbox.state == .on
         )
@@ -279,6 +285,12 @@ final class SettingsWindowController: NSWindowController {
 
     @objc private func toggleMDNS(_ sender: Any?) {
         mdnsDomainField.isEnabled = mdnsCheckbox.state == .on
+    }
+
+    @objc private func toggleBasicAuth(_ sender: Any?) {
+        let enabled = enableBasicAuthCheckbox.state == .on
+        authUsernameField.isEnabled = enabled
+        authPasswordField.isEnabled = enabled
     }
 
     @objc private func detectExecutable(_ sender: Any?) {
@@ -329,5 +341,13 @@ final class SettingsWindowController: NSWindowController {
 private extension String {
     var trimmed: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var normalizedExecutableInput: String {
+        let value = trimmed
+        if value.count >= 2, let first = value.first, let last = value.last, (first == "\"" && last == "\"") || (first == "'" && last == "'") {
+            return String(value.dropFirst().dropLast())
+        }
+        return value
     }
 }

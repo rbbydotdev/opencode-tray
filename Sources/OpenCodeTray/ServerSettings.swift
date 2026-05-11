@@ -8,6 +8,7 @@ struct ServerSettings: Equatable {
     var enableMDNS: Bool
     var mdnsDomain: String
     var corsOrigins: [String]
+    var enableBasicAuth: Bool
     var authUsername: String
     var authPassword: String
     var includeAuthInSharedURLs: Bool
@@ -22,6 +23,7 @@ struct ServerSettings: Equatable {
         enableMDNS: false,
         mdnsDomain: "opencode.local",
         corsOrigins: [],
+        enableBasicAuth: false,
         authUsername: "opencode",
         authPassword: "",
         includeAuthInSharedURLs: false,
@@ -38,6 +40,7 @@ struct ServerSettings: Equatable {
         static let enableMDNS = "server.enableMDNS"
         static let mdnsDomain = "server.mdnsDomain"
         static let corsOrigins = "server.corsOrigins"
+        static let enableBasicAuth = "server.enableBasicAuth"
         static let authUsername = "server.authUsername"
         static let hasAuthPassword = "server.hasAuthPassword"
         static let includeAuthInSharedURLs = "server.includeAuthInSharedURLs"
@@ -82,6 +85,15 @@ struct ServerSettings: Equatable {
         "\(serverURLString)/doc"
     }
 
+    var effectiveAuthUsername: String {
+        let username = authUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        return username.isEmpty ? "opencode" : username
+    }
+
+    var basicAuthEnabled: Bool {
+        enableBasicAuth && !authPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var displayCommand: String {
         ([executable] + arguments).map(shellQuoted).joined(separator: " ")
     }
@@ -91,7 +103,7 @@ struct ServerSettings: Equatable {
         environment["PATH"] = mergedPath(existing: base["PATH"])
 
         let password = authPassword.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !password.isEmpty {
+        if enableBasicAuth && !password.isEmpty {
             environment["OPENCODE_SERVER_PASSWORD"] = authPassword
             let username = authUsername.trimmingCharacters(in: .whitespacesAndNewlines)
             if !username.isEmpty && username != "opencode" {
@@ -130,6 +142,9 @@ struct ServerSettings: Equatable {
         }
         settings.mdnsDomain = defaults.string(forKey: Key.mdnsDomain) ?? settings.mdnsDomain
         settings.corsOrigins = defaults.stringArray(forKey: Key.corsOrigins) ?? settings.corsOrigins
+        if defaults.object(forKey: Key.enableBasicAuth) != nil {
+            settings.enableBasicAuth = defaults.bool(forKey: Key.enableBasicAuth)
+        }
         settings.authUsername = defaults.string(forKey: Key.authUsername) ?? settings.authUsername
         if defaults.bool(forKey: Key.hasAuthPassword) {
             settings.authPassword = KeychainPasswordStore.readPassword()
@@ -156,6 +171,7 @@ struct ServerSettings: Equatable {
         defaults.set(enableMDNS, forKey: Key.enableMDNS)
         defaults.set(mdnsDomain, forKey: Key.mdnsDomain)
         defaults.set(corsOrigins, forKey: Key.corsOrigins)
+        defaults.set(enableBasicAuth, forKey: Key.enableBasicAuth)
         defaults.set(authUsername, forKey: Key.authUsername)
         defaults.set(includeAuthInSharedURLs, forKey: Key.includeAuthInSharedURLs)
         defaults.set(launchAtLogin, forKey: Key.launchAtLogin)

@@ -31,8 +31,10 @@ Use from a phone:
 
 Use password auth:
 
-1. Set Username and Password in Settings.
-2. Optionally enable `Include auth in QR and copied URLs` for trusted devices only.
+1. Enable `OpenCode Basic Auth` in Settings.
+2. Set Username and Password.
+3. Scan the QR URL or use `Copy Server URL`.
+4. Enter the username and password manually if the browser prompts.
 
 ## Reference
 
@@ -43,12 +45,15 @@ Defaults:
 - Port: `4096`
 - Working directory: home directory
 - mDNS: off, domain `opencode.local`
+- OpenCode Basic Auth: off
 - Start server when tray opens: on
 - Start at Login: off
 
 QR and copied server URLs prefer Tailscale, then WireGuard/VPN-style `utun` private IPs, then LAN private IPs. Passwords are stored in Keychain and are only read after password auth is configured.
 
-The executable resolver checks common GUI-app paths including `~/.opencode/bin`, `~/.bun/bin`, `/opt/homebrew/bin`, and `/usr/local/bin`. Settings also has `Detect` and `Browse...` controls for selecting a specific binary.
+The executable resolver checks common GUI-app paths including `~/.opencode/bin`, `~/.bun/bin`, `/opt/homebrew/bin`, and `/usr/local/bin`. Settings also has `Detect` and `Browse...` controls for selecting a specific binary. Node/Bun opencode shims are unwrapped to the native opencode binary when possible.
+
+OpenCode Tray does not embed auth credentials or tokens into shared URLs.
 
 ## Explanation
 

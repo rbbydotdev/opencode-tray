@@ -75,6 +75,27 @@ enum ServerURLResolver {
         )
     }
 
+    static func docTarget(for settings: ServerSettings) -> ServerAccessTarget {
+        let target = accessTarget(for: settings)
+        guard var components = URLComponents(string: target.urlString) else { return target }
+        components.path = "/doc"
+
+        let displayComponents = URLComponents(string: target.displayURLString)
+        var display = target.displayURLString
+        if var displayComponents {
+            displayComponents.path = "/doc"
+            display = displayComponents.string ?? display
+        }
+
+        return ServerAccessTarget(
+            urlString: components.string ?? target.urlString,
+            displayURLString: display,
+            baseURLString: "\(target.baseURLString)/doc",
+            subtitle: target.subtitle,
+            note: target.note
+        )
+    }
+
     static func isLocalOnly(_ settings: ServerSettings) -> Bool {
         isLoopback(settings.hostname.trimmingCharacters(in: .whitespacesAndNewlines))
     }
@@ -90,30 +111,15 @@ enum ServerURLResolver {
 
     private static func makeTarget(host: String, port: Int, settings: ServerSettings, subtitle: String, note: String?) -> ServerAccessTarget {
         let baseURLString = "http://\(host):\(port)"
-        let includeAuth = settings.includeAuthInSharedURLs && !settings.authPassword.isEmpty
-        let urlString = includeAuth ? authURLString(host: host, port: port, settings: settings, masked: false) : baseURLString
-        let displayURLString = includeAuth ? authURLString(host: host, port: port, settings: settings, masked: true) : baseURLString
-        let authNote = includeAuth ? "Includes Basic Auth credentials." : nil
+        let authNote = settings.basicAuthEnabled ? "OpenCode Basic Auth is enabled; enter the username and password manually if the browser prompts." : nil
 
         return ServerAccessTarget(
-            urlString: urlString,
-            displayURLString: displayURLString,
+            urlString: baseURLString,
+            displayURLString: baseURLString,
             baseURLString: baseURLString,
             subtitle: subtitle,
             note: [note, authNote].compactMap { $0 }.joined(separator: " ").nilIfEmpty
         )
-    }
-
-    private static func authURLString(host: String, port: Int, settings: ServerSettings, masked: Bool) -> String {
-        let username = settings.authUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "opencode" : settings.authUsername.trimmingCharacters(in: .whitespacesAndNewlines)
-        let password = masked ? "****" : settings.authPassword
-        return "http://\(percentEncodedUserInfo(username)):\(percentEncodedUserInfo(password))@\(host):\(port)"
-    }
-
-    private static func percentEncodedUserInfo(_ value: String) -> String {
-        var allowed = CharacterSet.urlUserAllowed
-        allowed.remove(charactersIn: ":@/?#[]")
-        return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
     }
 }
 
