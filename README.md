@@ -4,6 +4,9 @@ OpenCode Tray is a small macOS menu bar app for running `opencode serve`.
 
 It starts and stops the server, shows the active URL, generates a phone-friendly QR code, and can launch at login.
 
+
+<img width="380" height="345" alt="Screenshot 2026-05-14 at 7 32 45 PM" src="https://github.com/user-attachments/assets/a8d824a7-5767-4c7e-9174-91c3755ce48e" />
+
 ## Tutorial
 
 Build and open the app:
