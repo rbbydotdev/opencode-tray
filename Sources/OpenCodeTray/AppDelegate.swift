@@ -1,23 +1,28 @@
 import AppKit
+import Network
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private let menu = NSMenu()
     private let statusMenuItem = NSMenuItem()
     private let serverURLMenuItem = NSMenuItem()
     private let localURLMenuItem = NSMenuItem()
+    private let caffeinateStatusMenuItem = NSMenuItem()
     private let startStopMenuItem = NSMenuItem(title: "Start Server", action: nil, keyEquivalent: "")
     private let openDocsMenuItem = NSMenuItem(title: "Open Server Docs", action: nil, keyEquivalent: "")
     private let copyURLMenuItem = NSMenuItem(title: "Copy Server URL", action: nil, keyEquivalent: "")
     private let copyLocalURLMenuItem = NSMenuItem(title: "Copy Local URL", action: nil, keyEquivalent: "")
     private let showQRMenuItem = NSMenuItem(title: "Show Server QR", action: nil, keyEquivalent: "")
     private let copyLogsMenuItem = NSMenuItem(title: "Copy Recent Logs", action: nil, keyEquivalent: "")
+    private let caffeinateToggleMenuItem = NSMenuItem(title: "Keep Awake", action: nil, keyEquivalent: "")
     private let launchAtLoginMenuItem = NSMenuItem(title: "Start at Login", action: nil, keyEquivalent: "")
     private let settingsMenuItem = NSMenuItem(title: "Settings...", action: nil, keyEquivalent: ",")
     private let quitMenuItem = NSMenuItem(title: "Quit OpenCode Tray", action: nil, keyEquivalent: "q")
 
     private var settings = ServerSettings.load()
     private let qrPopover = QRCodePopoverController()
+    private let caffeinate = CaffeinateController()
+    private let pathMonitor = NWPathMonitor()
 
     private lazy var server = OpenCodeServer(settingsProvider: { [weak self] in
         self?.settings ?? .defaults
@@ -39,7 +44,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         server.onStateChanged = { [weak self] _ in
             self?.updateMenu()
+            self?.applyCaffeinateSettings()
         }
+
+        pathMonitor.pathUpdateHandler = { [weak self] _ in
+            DispatchQueue.main.async { self?.updateMenu() }
+        }
+        pathMonitor.start(queue: .global(qos: .utility))
+
+        menu.delegate = self
+
+        caffeinate.onStatusChanged = { [weak self] _ in
+            self?.updateMenu()
+        }
+        applyCaffeinateSettings()
 
         updateMenu()
 
@@ -50,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         server.stop(waitUntilExit: true)
+        caffeinate.shutdown()
     }
 
     private func setupStatusItem() {
@@ -90,6 +109,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(serverURLMenuItem)
         localURLMenuItem.isEnabled = false
         menu.addItem(localURLMenuItem)
+        caffeinateStatusMenuItem.isEnabled = false
+        menu.addItem(caffeinateStatusMenuItem)
         menu.addItem(NSMenuItem.separator())
 
         configure(startStopMenuItem, action: #selector(toggleServer(_:)))
@@ -107,9 +128,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(copyLogsMenuItem)
         menu.addItem(NSMenuItem.separator())
 
+        configure(caffeinateToggleMenuItem, action: #selector(toggleCaffeinate(_:)))
         configure(launchAtLoginMenuItem, action: #selector(toggleLaunchAtLogin(_:)))
         configure(settingsMenuItem, action: #selector(openSettings(_:)))
 
+        menu.addItem(caffeinateToggleMenuItem)
         menu.addItem(launchAtLoginMenuItem)
         menu.addItem(settingsMenuItem)
         menu.addItem(NSMenuItem.separator())
@@ -129,14 +152,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem?.button?.toolTip = "OpenCode: \(state.title)"
 
         statusMenuItem.title = "OpenCode: \(state.title)"
-        let accessTarget = ServerURLResolver.accessTarget(for: settings)
+        let accessTarget = ServerURLResolver.accessTarget(for: settings, runtimePort: server.runtimePort)
         serverURLMenuItem.title = "Server URL: \(accessTarget.displayURLString)"
 
         if accessTarget.baseURLString == settings.serverURLString {
             localURLMenuItem.isHidden = true
             copyLocalURLMenuItem.isHidden = true
         } else {
-            let localTarget = ServerURLResolver.localTarget(for: settings)
+            let localTarget = ServerURLResolver.localTarget(for: settings, runtimePort: server.runtimePort)
             localURLMenuItem.isHidden = false
             localURLMenuItem.title = "Local URL: \(localTarget.displayURLString)"
             copyLocalURLMenuItem.isHidden = false
@@ -149,12 +172,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showQRMenuItem.isEnabled = true
         copyLogsMenuItem.isEnabled = !server.recentOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
+        caffeinateStatusMenuItem.title = "Keep Awake: \(caffeinate.status.summary)"
+        caffeinateToggleMenuItem.state = settings.caffeinateEnabled ? .on : .off
+
         let launchEnabled = LaunchAgentManager.shared.isEnabled
         launchAtLoginMenuItem.state = launchEnabled ? .on : .off
         if settings.launchAtLogin != launchEnabled {
             settings.launchAtLogin = launchEnabled
             settings.save()
         }
+    }
+
+    private func applyCaffeinateSettings() {
+        caffeinate.apply(
+            enabled: settings.caffeinateEnabled && server.state.canStop,
+            allowLidClosed: settings.caffeinateAllowLidClosed,
+            keepAwakeOnBattery: settings.caffeinateOnBattery
+        )
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        updateMenu()
     }
 
     private func applySettings(_ newSettings: ServerSettings, restartIfActive: Bool) -> Bool {
@@ -174,6 +212,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             server.restart()
         }
 
+        applyCaffeinateSettings()
         updateMenu()
         return true
     }
@@ -196,23 +235,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openServerDocs(_ sender: Any?) {
-        guard let url = URL(string: ServerURLResolver.docTarget(for: settings).urlString) else { return }
+        guard let url = URL(string: ServerURLResolver.docTarget(for: settings, runtimePort: server.runtimePort).urlString) else { return }
         NSWorkspace.shared.open(url)
     }
 
     @objc private func copyServerURL(_ sender: Any?) {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(ServerURLResolver.accessTarget(for: settings).urlString, forType: .string)
+        NSPasteboard.general.setString(ServerURLResolver.accessTarget(for: settings, runtimePort: server.runtimePort).urlString, forType: .string)
     }
 
     @objc private func copyLocalURL(_ sender: Any?) {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(ServerURLResolver.localTarget(for: settings).urlString, forType: .string)
+        NSPasteboard.general.setString(ServerURLResolver.localTarget(for: settings, runtimePort: server.runtimePort).urlString, forType: .string)
     }
 
     @objc private func showServerQR(_ sender: Any?) {
         guard let button = statusItem?.button else { return }
-        qrPopover.show(target: ServerURLResolver.accessTarget(for: settings), relativeTo: button)
+        qrPopover.show(target: ServerURLResolver.accessTarget(for: settings, runtimePort: server.runtimePort), relativeTo: button)
     }
 
     @objc private func copyRecentLogs(_ sender: Any?) {
@@ -223,6 +262,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func toggleLaunchAtLogin(_ sender: Any?) {
         var updated = settings
         updated.launchAtLogin = !LaunchAgentManager.shared.isEnabled
+        _ = applySettings(updated, restartIfActive: false)
+    }
+
+    @objc private func toggleCaffeinate(_ sender: Any?) {
+        var updated = settings
+        updated.caffeinateEnabled.toggle()
         _ = applySettings(updated, restartIfActive: false)
     }
 

@@ -10,7 +10,9 @@ struct ServerAccessTarget {
 }
 
 enum ServerURLResolver {
-    static func accessTarget(for settings: ServerSettings) -> ServerAccessTarget {
+    static func accessTarget(for settings: ServerSettings, runtimePort: Int? = nil) -> ServerAccessTarget {
+        var settings = settings
+        if let runtimePort { settings.port = runtimePort }
         let hostname = settings.hostname.trimmingCharacters(in: .whitespacesAndNewlines)
         let candidate = NetworkAddressResolver.bestCandidate()
 
@@ -65,8 +67,10 @@ enum ServerURLResolver {
         )
     }
 
-    static func localTarget(for settings: ServerSettings) -> ServerAccessTarget {
-        makeTarget(
+    static func localTarget(for settings: ServerSettings, runtimePort: Int? = nil) -> ServerAccessTarget {
+        var settings = settings
+        if let runtimePort { settings.port = runtimePort }
+        return makeTarget(
             host: settings.localURLHost,
             port: settings.port,
             settings: settings,
@@ -75,8 +79,8 @@ enum ServerURLResolver {
         )
     }
 
-    static func docTarget(for settings: ServerSettings) -> ServerAccessTarget {
-        let target = accessTarget(for: settings)
+    static func docTarget(for settings: ServerSettings, runtimePort: Int? = nil) -> ServerAccessTarget {
+        let target = accessTarget(for: settings, runtimePort: runtimePort)
         guard var components = URLComponents(string: target.urlString) else { return target }
         components.path = "/doc"
 

@@ -14,6 +14,9 @@ struct ServerSettings: Equatable {
     var includeAuthInSharedURLs: Bool
     var launchAtLogin: Bool
     var startServerOnLaunch: Bool
+    var caffeinateEnabled: Bool
+    var caffeinateAllowLidClosed: Bool
+    var caffeinateOnBattery: Bool
 
     static let defaults = ServerSettings(
         executable: "opencode",
@@ -28,7 +31,10 @@ struct ServerSettings: Equatable {
         authPassword: "",
         includeAuthInSharedURLs: false,
         launchAtLogin: false,
-        startServerOnLaunch: true
+        startServerOnLaunch: true,
+        caffeinateEnabled: false,
+        caffeinateAllowLidClosed: false,
+        caffeinateOnBattery: false
     )
 
     private enum Key {
@@ -42,10 +48,13 @@ struct ServerSettings: Equatable {
         static let corsOrigins = "server.corsOrigins"
         static let enableBasicAuth = "server.enableBasicAuth"
         static let authUsername = "server.authUsername"
-        static let hasAuthPassword = "server.hasAuthPassword"
+        static let authPassword = "server.authPassword"
         static let includeAuthInSharedURLs = "server.includeAuthInSharedURLs"
         static let launchAtLogin = "app.launchAtLogin"
         static let startServerOnLaunch = "app.startServerOnLaunch"
+        static let caffeinateEnabled = "app.caffeinateEnabled"
+        static let caffeinateAllowLidClosed = "app.caffeinateAllowLidClosed"
+        static let caffeinateOnBattery = "app.caffeinateOnBattery"
     }
 
     var expandedWorkingDirectory: String {
@@ -146,9 +155,7 @@ struct ServerSettings: Equatable {
             settings.enableBasicAuth = defaults.bool(forKey: Key.enableBasicAuth)
         }
         settings.authUsername = defaults.string(forKey: Key.authUsername) ?? settings.authUsername
-        if defaults.bool(forKey: Key.hasAuthPassword) {
-            settings.authPassword = KeychainPasswordStore.readPassword()
-        }
+        settings.authPassword = defaults.string(forKey: Key.authPassword) ?? settings.authPassword
         if defaults.object(forKey: Key.includeAuthInSharedURLs) != nil {
             settings.includeAuthInSharedURLs = defaults.bool(forKey: Key.includeAuthInSharedURLs)
         }
@@ -158,6 +165,15 @@ struct ServerSettings: Equatable {
         }
         if defaults.object(forKey: Key.startServerOnLaunch) != nil {
             settings.startServerOnLaunch = defaults.bool(forKey: Key.startServerOnLaunch)
+        }
+        if defaults.object(forKey: Key.caffeinateEnabled) != nil {
+            settings.caffeinateEnabled = defaults.bool(forKey: Key.caffeinateEnabled)
+        }
+        if defaults.object(forKey: Key.caffeinateAllowLidClosed) != nil {
+            settings.caffeinateAllowLidClosed = defaults.bool(forKey: Key.caffeinateAllowLidClosed)
+        }
+        if defaults.object(forKey: Key.caffeinateOnBattery) != nil {
+            settings.caffeinateOnBattery = defaults.bool(forKey: Key.caffeinateOnBattery)
         }
 
         return settings
@@ -173,15 +189,14 @@ struct ServerSettings: Equatable {
         defaults.set(corsOrigins, forKey: Key.corsOrigins)
         defaults.set(enableBasicAuth, forKey: Key.enableBasicAuth)
         defaults.set(authUsername, forKey: Key.authUsername)
+        defaults.set(authPassword, forKey: Key.authPassword)
         defaults.set(includeAuthInSharedURLs, forKey: Key.includeAuthInSharedURLs)
         defaults.set(launchAtLogin, forKey: Key.launchAtLogin)
         defaults.set(startServerOnLaunch, forKey: Key.startServerOnLaunch)
+        defaults.set(caffeinateEnabled, forKey: Key.caffeinateEnabled)
+        defaults.set(caffeinateAllowLidClosed, forKey: Key.caffeinateAllowLidClosed)
+        defaults.set(caffeinateOnBattery, forKey: Key.caffeinateOnBattery)
 
-        let hasPassword = !authPassword.isEmpty
-        if hasPassword || defaults.bool(forKey: Key.hasAuthPassword) {
-            KeychainPasswordStore.savePassword(authPassword)
-        }
-        defaults.set(hasPassword, forKey: Key.hasAuthPassword)
     }
 
     private var urlHost: String {

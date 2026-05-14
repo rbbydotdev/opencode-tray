@@ -56,6 +56,8 @@ final class OpenCodeServer {
         didSet { onStateChanged?(state) }
     }
 
+    private(set) var runtimePort: Int?
+
     private(set) var recentOutput = ""
 
     init(settingsProvider: @escaping () -> ServerSettings) {
@@ -65,9 +67,16 @@ final class OpenCodeServer {
     func start() {
         guard process == nil else { return }
 
-        let settings = settingsProvider()
+        var settings = settingsProvider()
         requestedStop = false
         recentOutput = ""
+
+        if let actualPort = PortFinder.findAvailable(startingFrom: settings.port), actualPort != settings.port {
+            appendOutput("Port \(settings.port) is in use; using \(actualPort) instead.\n")
+            settings.port = actualPort
+        }
+        runtimePort = settings.port
+
         appendOutput("$ \(settings.displayCommand)\n")
         state = .starting
 
@@ -113,6 +122,7 @@ final class OpenCodeServer {
         } catch {
             pipe.fileHandleForReading.readabilityHandler = nil
             outputPipe = nil
+            runtimePort = nil
             appendOutput("Failed to start: \(error.localizedDescription)\n")
             state = .failed(error.localizedDescription)
         }
@@ -153,6 +163,7 @@ final class OpenCodeServer {
         outputPipe?.fileHandleForReading.readabilityHandler = nil
         outputPipe = nil
         process = nil
+        runtimePort = nil
 
         if requestedStop || terminatedProcess.terminationStatus == 0 {
             state = .stopped

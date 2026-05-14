@@ -17,12 +17,17 @@ final class SettingsWindowController: NSWindowController {
     private let authPasswordField = NSSecureTextField()
     private let launchAtLoginCheckbox = NSButton(checkboxWithTitle: "Start at Login", target: nil, action: nil)
     private let startOnLaunchCheckbox = NSButton(checkboxWithTitle: "Run server when OpenCode Tray opens", target: nil, action: nil)
+    private let caffeinateEnabledCheckbox = NSButton(checkboxWithTitle: "Keep Awake while server is running", target: nil, action: nil)
+    private let caffeinateLidClosedCheckbox = NSButton(checkboxWithTitle: "Stay awake even with lid closed", target: nil, action: nil)
+    private let caffeinateOnBatteryCheckbox = NSButton(checkboxWithTitle: "Keep Awake on battery", target: nil, action: nil)
+    private let helperStatusLabel = NSTextField(labelWithString: "")
+    private let helperInstallButton = NSButton(title: "Install Helper\u{2026}", target: nil, action: nil)
 
     init(settings: ServerSettings, onSave: @escaping (ServerSettings) -> Bool) {
         self.onSave = onSave
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 674),
+            contentRect: NSRect(x: 0, y: 0, width: 560, height: 824),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -84,6 +89,15 @@ final class SettingsWindowController: NSWindowController {
         addCheckboxRow(launchAtLoginCheckbox, to: stack)
         addCheckboxRow(startOnLaunchCheckbox, to: stack)
 
+        addSection("Keep Awake")
+        addCheckboxRow(caffeinateEnabledCheckbox, to: stack)
+        addCheckboxRow(caffeinateLidClosedCheckbox, to: stack)
+        addCheckboxRow(caffeinateOnBatteryCheckbox, to: stack)
+        addRow("Helper", makeHelperControl(), to: stack)
+
+        caffeinateLidClosedCheckbox.toolTip = "macOS only honors this on AC power. To also keep the lid-closed override active on battery, install the helper and tick \u{201C}Keep Awake on battery\u{201D}."
+        caffeinateOnBatteryCheckbox.toolTip = "Without the helper, only idle sleep is prevented. Install the helper to also override lid-close sleep on battery."
+
         let note = NSTextField(wrappingLabelWithString: "Saving settings restarts the server if it is running; no macOS reboot is needed. OpenCode Basic Auth is optional; shared URLs stay plain, so enter credentials manually if the browser prompts.")
         note.textColor = .secondaryLabelColor
         note.font = .systemFont(ofSize: 11)
@@ -97,6 +111,10 @@ final class SettingsWindowController: NSWindowController {
         mdnsCheckbox.action = #selector(toggleMDNS(_:))
         enableBasicAuthCheckbox.target = self
         enableBasicAuthCheckbox.action = #selector(toggleBasicAuth(_:))
+        caffeinateEnabledCheckbox.target = self
+        caffeinateEnabledCheckbox.action = #selector(toggleCaffeinateEnabled(_:))
+        helperInstallButton.target = self
+        helperInstallButton.action = #selector(toggleHelperInstall(_:))
         detectExecutableButton.target = self
         detectExecutableButton.action = #selector(detectExecutable(_:))
         browseExecutableButton.target = self
@@ -151,6 +169,18 @@ final class SettingsWindowController: NSWindowController {
         return row
     }
 
+    private func makeHelperControl() -> NSStackView {
+        helperStatusLabel.textColor = .secondaryLabelColor
+        helperStatusLabel.font = .systemFont(ofSize: 12)
+        helperStatusLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        let row = NSStackView(views: [helperStatusLabel, helperInstallButton])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 8
+        return row
+    }
+
     private func makeCORSEditor() -> NSScrollView {
         let scrollView = NSScrollView()
         scrollView.hasVerticalScroller = true
@@ -201,9 +231,20 @@ final class SettingsWindowController: NSWindowController {
         authPasswordField.stringValue = settings.authPassword
         launchAtLoginCheckbox.state = settings.launchAtLogin ? .on : .off
         startOnLaunchCheckbox.state = settings.startServerOnLaunch ? .on : .off
+        caffeinateEnabledCheckbox.state = settings.caffeinateEnabled ? .on : .off
+        caffeinateLidClosedCheckbox.state = settings.caffeinateAllowLidClosed ? .on : .off
+        caffeinateOnBatteryCheckbox.state = settings.caffeinateOnBattery ? .on : .off
         mdnsDomainField.isEnabled = mdnsCheckbox.state == .on
         authUsernameField.isEnabled = enableBasicAuthCheckbox.state == .on
         authPasswordField.isEnabled = enableBasicAuthCheckbox.state == .on
+        updateCaffeinateDependentState()
+        updateHelperUI()
+    }
+
+    private func updateHelperUI() {
+        let installed = HelperClient.shared.isInstalled
+        helperStatusLabel.stringValue = installed ? "Installed" : "Not installed"
+        helperInstallButton.title = installed ? "Uninstall\u{2026}" : "Install\u{2026}"
     }
 
     private func collectSettings() -> ServerSettings? {
@@ -270,7 +311,10 @@ final class SettingsWindowController: NSWindowController {
             authPassword: authPassword,
             includeAuthInSharedURLs: false,
             launchAtLogin: launchAtLoginCheckbox.state == .on,
-            startServerOnLaunch: startOnLaunchCheckbox.state == .on
+            startServerOnLaunch: startOnLaunchCheckbox.state == .on,
+            caffeinateEnabled: caffeinateEnabledCheckbox.state == .on,
+            caffeinateAllowLidClosed: caffeinateLidClosedCheckbox.state == .on,
+            caffeinateOnBattery: caffeinateOnBatteryCheckbox.state == .on
         )
     }
 
@@ -291,6 +335,43 @@ final class SettingsWindowController: NSWindowController {
         let enabled = enableBasicAuthCheckbox.state == .on
         authUsernameField.isEnabled = enabled
         authPasswordField.isEnabled = enabled
+    }
+
+    @objc private func toggleCaffeinateEnabled(_ sender: Any?) {
+        updateCaffeinateDependentState()
+    }
+
+    private func updateCaffeinateDependentState() {
+        let enabled = caffeinateEnabledCheckbox.state == .on
+        caffeinateLidClosedCheckbox.isEnabled = enabled
+        caffeinateOnBatteryCheckbox.isEnabled = enabled
+    }
+
+    @objc private func toggleHelperInstall(_ sender: Any?) {
+        let installed = HelperClient.shared.isInstalled
+        helperInstallButton.isEnabled = false
+        helperStatusLabel.stringValue = installed ? "Uninstalling\u{2026}" : "Installing\u{2026}"
+
+        let completion: (HelperInstaller.Outcome) -> Void = { [weak self] outcome in
+            guard let self else { return }
+            self.helperInstallButton.isEnabled = true
+            self.updateHelperUI()
+            self.updateCaffeinateDependentState()
+            NSApp.activate(ignoringOtherApps: true)
+            self.window?.makeKeyAndOrderFront(nil)
+            switch outcome {
+            case .ok, .userCancelled:
+                break
+            case .failed(let message):
+                self.showValidationError(message)
+            }
+        }
+
+        if installed {
+            HelperInstaller.uninstall(completion: completion)
+        } else {
+            HelperInstaller.install(completion: completion)
+        }
     }
 
     @objc private func detectExecutable(_ sender: Any?) {

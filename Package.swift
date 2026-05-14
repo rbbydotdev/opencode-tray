@@ -7,15 +7,24 @@ let package = Package(
     platforms: [.macOS(.v13)],
     products: [
         .executable(name: "OpenCodeTray", targets: ["OpenCodeTray"]),
+        .executable(name: "OpenCodeTrayHelper", targets: ["OpenCodeTrayHelper"]),
     ],
     targets: [
+        .target(
+            name: "HelperProtocol"
+        ),
         .executableTarget(
             name: "OpenCodeTray",
+            dependencies: ["HelperProtocol"],
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("CoreImage"),
-                .linkedFramework("Security"),
+                .linkedFramework("IOKit"),
             ]
+        ),
+        .executableTarget(
+            name: "OpenCodeTrayHelper",
+            dependencies: ["HelperProtocol"]
         ),
     ]
 )
