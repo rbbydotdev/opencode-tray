@@ -1,0 +1,113 @@
+Package.swift
+  s_11172d6ecd6633::t_bc54381edbe3a6 22
+  s_11172d6ecd6633::t_9bd7b4c529fd48 10,13-15,18,25-27
+Sources/OpenCodeTray/OpenCodeServer.swift
+  s_11172d6ecd6633::t_9f0fb0e37ec1a1 125
+  s_11172d6ecd6633::t_194a2511e609df 70,73-79
+  s_11172d6ecd6633::t_c83bfacada4ea8 59-60
+  s_11172d6ecd6633::t_a6405f5bb29b45 166
+Sources/OpenCodeTrayHelper/HelperService.swift
+  s_11172d6ecd6633::t_5f7f57e1785456 1-31
+Sources/OpenCodeTray/CaffeinateController.swift
+  s_11172d6ecd6633::t_a2c8be0d980f0a 9,21-25,43,65-73,75,77,80,84,101-112,114-115
+  s_11172d6ecd6633::t_e1baee2df3335d 1-8,10-20,26-36,38-42,44-57,59-60,62-64,74,76,78-79,81,83,85-92,96-100,113,116-190
+  s_11172d6ecd6633::t_a93d34fb0a7076 37
+  s_11172d6ecd6633::t_fb7b0675956d91 82,93-95
+  s_11172d6ecd6633::t_05926fc6d9b697 58,61
+scripts/build-app.sh
+  s_eed4fe39565a90::t_d2afa829882973 23-26,32
+  s_11172d6ecd6633::t_6348ee0ba5a552 29
+  s_11172d6ecd6633::t_bb623b96a1334e 12-17
+  s_11172d6ecd6633::t_f6b87910e83015 10,30,33-38,40,55-59
+  s_eed4fe39565a90::t_f489fe3eeab534 5-6,19,22,31
+  s_eed4fe39565a90::t_364aa45c927e9c 61
+  s_11172d6ecd6633::t_127909cd40b067 41-48,50,52
+Sources/OpenCodeTray/ServerSettings.swift
+  s_11172d6ecd6633::t_ddeedb374a80f5 177
+  s_11172d6ecd6633::t_dfe1c565038d13 158
+  s_11172d6ecd6633::t_9666deec0dddcf 17-18,34-36
+  s_11172d6ecd6633::t_3fbf9bb69fc0fa 175-176
+  s_11172d6ecd6633::t_964b38a382bb14 192
+  s_11172d6ecd6633::t_8f10504418d89f 19
+  s_11172d6ecd6633::t_ad5cd619866c1a 198
+  s_11172d6ecd6633::t_73f035e25a4166 55-56
+  s_11172d6ecd6633::t_9bca4b4f8ea874 196-197
+  s_11172d6ecd6633::t_4761848b12e846 51
+  s_11172d6ecd6633::t_c159920a844cb5 37
+  s_11172d6ecd6633::t_989856a0848060 57
+  s_11172d6ecd6633::t_890392d33abe8a 169-174
+Sources/OpenCodeTray/PortFinder.swift
+  s_11172d6ecd6633::t_94510ef1799986 1-38
+Sources/OpenCodeTray/ServerURLResolver.swift
+  s_11172d6ecd6633::t_796e101faa2011 70-73,82-83
+  s_11172d6ecd6633::t_de006d9be576bb 13-15
+Sources/OpenCodeTray/AppDelegate.swift
+  s_11172d6ecd6633::t_7cdf7a5adb2886 25
+  s_11172d6ecd6633::t_276283ac4f923a 2,4
+  s_11172d6ecd6633::t_8725d281f49d82 155,244,254
+  s_11172d6ecd6633::t_38e5041567e60b 268-273
+  s_11172d6ecd6633::t_0b52ee5aa823a8 190
+  s_11172d6ecd6633::t_50a2ddb51f8271 175-177,186-187,189,191
+  s_11172d6ecd6633::t_e7993b974007d5 10,17,24
+  s_11172d6ecd6633::t_fde3d7ac1a8c43 57-61
+  s_11172d6ecd6633::t_e65c71f738907a 215
+  s_11172d6ecd6633::t_7a5dc9272d0d29 47,50-55
+  s_11172d6ecd6633::t_d48fcea5288ff8 112-113,131,135
+  s_11172d6ecd6633::t_d745e5cd73c854 188,192-195
+  s_11172d6ecd6633::t_4a0c194b991ef6 71
+  s_11172d6ecd6633::t_a59f16bd6aab49 162,249
+  s_11172d6ecd6633::t_9363a9cd3f0e61 238
+Sources/HelperProtocol/HelperProtocol.swift
+  s_11172d6ecd6633::t_9f9dffeaa09def 1-13
+Sources/OpenCodeTray/HelperClient.swift
+  s_11172d6ecd6633::t_9e2927325a50fd 1-86
+Sources/OpenCodeTray/SettingsWindowController.swift
+  s_11172d6ecd6633::t_be17dc3cb25602 348-359,362-374
+  s_11172d6ecd6633::t_ddd07c7f63db0a 317
+  s_11172d6ecd6633::t_cf4f24850c491c 172-183
+  s_11172d6ecd6633::t_61996a7727d8ab 92-94,100
+  s_11172d6ecd6633::t_b49db0f6e414c2 23-24
+  s_11172d6ecd6633::t_2f897577503a76 347
+  s_11172d6ecd6633::t_d1cbc793d58f27 340-346,375-376
+  s_11172d6ecd6633::t_c931dcfb77f53d 234-235,240
+  s_11172d6ecd6633::t_e9f0659096a33b 314-316
+  s_11172d6ecd6633::t_c20b6fc84882c1 20
+  s_11172d6ecd6633::t_ab11d81ff50c91 95,97-99
+  s_11172d6ecd6633::t_9517f18cac192f 236
+  s_11172d6ecd6633::t_52afdef700840e 241-247
+  s_11172d6ecd6633::t_035c5177b4c51c 21-22
+  s_11172d6ecd6633::t_3a887941ce1b25 116-117
+  s_11172d6ecd6633::t_76d4dabaf2fa8f 96
+  s_11172d6ecd6633::t_2e674d6d448b76 114-115
+  s_11172d6ecd6633::t_0442bc9e7f65ba 360-361
+  s_11172d6ecd6633::t_cfd8459aa9f577 30
+Sources/OpenCodeTrayHelper/main.swift
+  s_11172d6ecd6633::t_75a37e279c3a2d 1-9
+Sources/OpenCodeTray/HelperInstaller.swift
+  s_11172d6ecd6633::t_283238d3f55e61 2,12-23,27-56,58-88,90-98,102-103,117,129
+  s_11172d6ecd6633::t_5565e5385fa839 1,3-11,24-26,57,89,99-101,104-116,118-128,130-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b5c2899da0a657e69a7a6067d455fa60dfba97d2",
+  "prompts": {},
+  "sessions": {
+    "s_11172d6ecd6633": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e48d4a52-21b3-4547-ada6-dd42d5a27a27",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "robby <robby.polana+github@gmail.com>"
+    },
+    "s_eed4fe39565a90": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1dc5c6987ffeVVWQppbDhpcxbr",
+        "model": "gpt-5.5-fast"
+      },
+      "human_author": "robby <robby.polana+github@gmail.com>"
+    }
+  }
+}
